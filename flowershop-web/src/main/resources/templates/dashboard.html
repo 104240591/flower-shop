@@ -1,0 +1,1457 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BlossomFlow — Botanical Boutique POS & Management System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,600;0,700;1,400&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        forest: {
+                            50: '#F2F9F5',
+                            100: '#D8F3DC',
+                            200: '#B7E4C7',
+                            500: '#40916C',
+                            600: '#2D6A4F',
+                            700: '#1B4332',
+                            800: '#132F23',
+                            900: '#081C15'
+                        },
+                        cream: '#FAF9F6',
+                        terracotta: {
+                            100: '#FDE8E2',
+                            500: '#E07A5F',
+                            600: '#C8644A'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        serif: ['Playfair Display', 'serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #FAF9F6;
+            color: #1E293B;
+        }
+        .custom-scroll::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        .custom-scroll::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 6px;
+        }
+        .custom-scroll::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 6px;
+        }
+        .custom-scroll::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade {
+            animation: fadeIn 0.2s ease-out forwards;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col font-sans antialiased">
+
+    <!-- TOP NAVIGATION BAR & ROLE ACCESS CONTROL -->
+    <header class="bg-forest-700 text-white shadow-md sticky top-0 z-30">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex flex-wrap items-center justify-between gap-4">
+            <!-- Brand Title -->
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl bg-forest-100 text-forest-700 flex items-center justify-center shadow-inner">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                    </svg>
+                </div>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <h1 class="font-serif text-xl sm:text-2xl font-bold tracking-tight text-white">BlossomFlow Boutique</h1>
+                        <span class="hidden sm:inline-block text-[11px] uppercase tracking-wider px-2 py-0.5 rounded-full bg-forest-600 text-forest-100 font-semibold border border-forest-500">3-Tier POS</span>
+                    </div>
+                    <p class="text-xs text-forest-100/80">Perishable Floral Inventory & Composite Bouquet Management</p>
+                </div>
+            </div>
+
+            <!-- Right Controls: Role Switcher (Part VII Access Control) & Thymeleaf Code Export -->
+            <div class="flex items-center flex-wrap gap-3">
+                <div class="bg-forest-800/90 border border-forest-600 rounded-xl px-3 py-1.5 flex items-center gap-2.5">
+                    <div class="text-right">
+                        <span class="block text-[10px] uppercase tracking-wider text-forest-200">Active Session Role (Part VII)</span>
+                        <select id="roleSelector" onchange="switchStaffRole(this.value)" class="bg-transparent text-xs sm:text-sm font-semibold text-white focus:outline-none cursor-pointer">
+                            <option value="FLORIST" class="text-slate-900">Bob Florist (ST02 — FLORIST)</option>
+                            <option value="MANAGER" class="text-slate-900">Alice Admin (ST01 — MANAGER)</option>
+                        </select>
+                    </div>
+                    <span id="roleBadge" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-400/20 text-amber-300 border border-amber-400/30">
+                        FLORIST
+                    </span>
+                </div>
+
+                <button onclick="openSpringModal()" class="px-3.5 py-2 rounded-xl bg-terracotta-500 hover:bg-terracotta-600 text-white text-xs sm:text-sm font-semibold transition flex items-center gap-1.5 shadow-sm">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path>
+                    </svg>
+                    <span>Spring Boot Guide</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Sub-bar: KPI Summary Strip & Module Tabs -->
+        <div class="bg-forest-800 border-t border-forest-600/60">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 py-2">
+                <!-- Navigation Tabs (Mapped to Tier 1 GUI Classes) -->
+                <nav class="flex space-x-1 overflow-x-auto custom-scroll py-1" aria-label="Tabs">
+                    <button onclick="switchTab('pos')" id="tab-pos" class="tab-btn px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold transition whitespace-nowrap bg-forest-100 text-forest-900 shadow-sm">
+                        1. POS & Checkout <span class="hidden xl:inline text-[11px] opacity-75 font-normal">(OrderProcessingDialog)</span>
+                    </button>
+                    <button onclick="switchTab('bouquet')" id="tab-bouquet" class="tab-btn px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold transition whitespace-nowrap text-forest-100 hover:bg-forest-700">
+                        2. Bouquet Builder <span class="hidden xl:inline text-[11px] opacity-75 font-normal">(BouquetBuilderDialog)</span>
+                    </button>
+                    <button onclick="switchTab('inventory')" id="tab-inventory" class="tab-btn px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold transition whitespace-nowrap text-forest-100 hover:bg-forest-700">
+                        3. Perishable Inventory <span class="hidden xl:inline text-[11px] opacity-75 font-normal">(InventoryReportPage)</span>
+                    </button>
+                    <button onclick="switchTab('customers')" id="tab-customers" class="tab-btn px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold transition whitespace-nowrap text-forest-100 hover:bg-forest-700">
+                        4. Customer CRM <span class="hidden xl:inline text-[11px] opacity-75 font-normal">(CustomerManagementPage)</span>
+                    </button>
+                    <button onclick="switchTab('database')" id="tab-database" class="tab-btn px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold transition whitespace-nowrap text-forest-100 hover:bg-forest-700">
+                        5. DB Transactions <span class="hidden xl:inline text-[11px] opacity-75 font-normal">(PostgreSQL Audit)</span>
+                    </button>
+                </nav>
+
+                <!-- Live KPI Metrics -->
+                <div class="flex items-center space-x-4 text-xs text-forest-100 overflow-x-auto py-1">
+                    <div class="flex items-center gap-1.5 whitespace-nowrap">
+                        <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+                        <span class="opacity-75">Revenue:</span>
+                        <strong id="kpiRevenue" class="text-white font-semibold">$0.00</strong>
+                    </div>
+                    <div class="flex items-center gap-1.5 whitespace-nowrap">
+                        <span class="w-2 h-2 rounded-full bg-sky-400"></span>
+                        <span class="opacity-75">Total Stems:</span>
+                        <strong id="kpiStems" class="text-white font-semibold">0</strong>
+                    </div>
+                    <div class="flex items-center gap-1.5 whitespace-nowrap">
+                        <span class="w-2 h-2 rounded-full bg-rose-400"></span>
+                        <span class="opacity-75">40% Clearance Items:</span>
+                        <strong id="kpiClearance" class="text-rose-300 font-semibold">0</strong>
+                    </div>
+                    <div class="flex items-center gap-1.5 whitespace-nowrap">
+                        <span class="w-2 h-2 rounded-full bg-amber-400"></span>
+                        <span class="opacity-75">VIP Members:</span>
+                        <strong id="kpiCustomers" class="text-white font-semibold">0</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- THYMELEAF SERVER FEEDBACK BANNER (Works when rendered via Spring Boot RedirectAttributes) -->
+    <div class="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 mt-4">
+        <div th:if="${successMessage}" class="mb-3 p-3.5 rounded-xl bg-emerald-50 border border-emerald-300 text-emerald-800 text-sm font-medium flex items-center justify-between">
+            <span th:text="${successMessage}">Order processed successfully!</span>
+        </div>
+        <div th:if="${errorMessage}" class="mb-3 p-3.5 rounded-xl bg-rose-50 border border-rose-300 text-rose-800 text-sm font-medium flex items-center justify-between">
+            <span th:text="${errorMessage}">Error processing transaction.</span>
+        </div>
+        <!-- Client-side Interactive Toast Banner -->
+        <div id="toastBanner" class="hidden mb-3 p-3.5 rounded-xl border text-sm font-medium flex items-center justify-between shadow-sm animate-fade">
+            <div class="flex items-center gap-2.5">
+                <span id="toastIcon" class="w-5 h-5 flex items-center justify-center rounded-full text-xs font-bold">✓</span>
+                <span id="toastText">Operation completed</span>
+            </div>
+            <button onclick="hideToast()" class="text-xs font-bold opacity-60 hover:opacity-100 px-2">DISMISS</button>
+        </div>
+    </div>
+
+    <!-- MAIN CONTENT WORKSPACE -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-4">
+
+        <!-- =================================================================== -->
+        <!-- TAB 1: POS & ORDER CHECKOUT (OrderProcessingDialog)                 -->
+        <!-- =================================================================== -->
+        <section id="view-pos" class="tab-view grid grid-cols-1 lg:grid-cols-12 gap-6 animate-fade">
+            
+            <!-- Left 8 Cols: Interactive Catalog -->
+            <div class="lg:col-span-8 flex flex-col gap-4">
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-5">
+                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-4 border-b border-slate-100">
+                        <div>
+                            <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+                                <span>Perishable Floral & Item Catalog</span>
+                                <span class="text-xs font-medium px-2.5 py-0.5 rounded-full bg-forest-50 text-forest-700 border border-forest-200">Polymorphic Pricing</span>
+                            </h2>
+                            <p class="text-xs text-slate-500 mt-0.5">Items past their vase life automatically trigger <code class="text-rose-600 font-semibold">Flower.getCalculatedPrice()</code> (40% clearance discount).</p>
+                        </div>
+
+                        <!-- Search & Type Filter -->
+                        <div class="flex items-center gap-2">
+                            <input id="posSearchInput" oninput="renderPosCatalog()" type="text" placeholder="Search flower, color, ID..." class="px-3 py-1.5 text-sm rounded-xl border border-slate-200 focus:outline-none focus:border-forest-600 w-44 sm:w-52">
+                            <select id="posFilterType" onchange="renderPosCatalog()" class="px-3 py-1.5 text-sm rounded-xl border border-slate-200 bg-slate-50 font-medium text-slate-700 focus:outline-none">
+                                <option value="ALL">All Types</option>
+                                <option value="FLOWER">Fresh Flowers</option>
+                                <option value="BOUQUET">Bouquets</option>
+                                <option value="ACCESSORY">Accessories</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Product Grid -->
+                    <div id="posCatalogGrid" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3.5 mt-4 max-h-[540px] overflow-y-auto custom-scroll pr-1">
+                        <!-- Populated dynamically by JS -->
+                    </div>
+                </div>
+
+                <!-- Spring Boot Native Fallback Form (Collapsible for direct POST /orders/checkout) -->
+                <details class="bg-white rounded-2xl shadow-sm border border-slate-200/80 px-5 py-3.5 text-xs text-slate-600">
+                    <summary class="cursor-pointer font-semibold text-forest-700 flex items-center justify-between">
+                        <span>Spring Boot Direct Server POST Form (@PostMapping("/orders/checkout"))</span>
+                        <span class="text-[11px] bg-slate-100 px-2 py-0.5 rounded text-slate-500">Click to expand native Thymeleaf form</span>
+                    </summary>
+                    <form th:action="@{/orders/checkout}" action="/orders/checkout" method="post" class="mt-3 pt-3 border-t border-slate-100 grid grid-cols-1 sm:grid-cols-3 gap-3 items-end">
+                        <div>
+                            <label class="block font-semibold mb-1 text-slate-700">Flower Variety (Server Bound):</label>
+                            <select name="flowerId" id="nativeFlowerSelect" class="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white text-slate-800">
+                                <option th:each="flw : ${flowers}" th:value="${flw.id}" th:text="${flw.name} + ' ($' + ${flw.calculatedPrice} + ')'" value="FLW01">FLW01 - Red Rose ($2.50)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block font-semibold mb-1 text-slate-700">Stem Quantity:</label>
+                            <input type="number" name="quantity" min="1" value="5" class="w-full px-3 py-2 rounded-lg border border-slate-300" required>
+                        </div>
+                        <button type="submit" class="px-4 py-2 rounded-lg bg-forest-700 hover:bg-forest-600 text-white font-semibold transition">
+                            Submit Native HTTP POST
+                        </button>
+                    </form>
+                </details>
+            </div>
+
+            <!-- Right 4 Cols: Active Order Cart & Customer Loyalty Selector -->
+            <div class="lg:col-span-4 flex flex-col gap-4">
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-5 flex flex-col h-full">
+                    <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                        <div>
+                            <h3 class="text-base font-bold text-slate-800">Active POS Order Cart</h3>
+                            <p class="text-xs text-slate-500">Tier 2: <code class="text-forest-700">OrderController.submitOrder()</code></p>
+                        </div>
+                        <button onclick="clearCart()" class="text-xs text-rose-600 hover:text-rose-700 font-semibold">Clear All</button>
+                    </div>
+
+                    <!-- Customer Selector -->
+                    <div class="mt-3 bg-forest-50/70 border border-forest-200/80 rounded-xl p-3">
+                        <div class="flex items-center justify-between mb-1">
+                            <label for="posCustomerSelect" class="text-xs font-bold uppercase tracking-wider text-forest-800">Customer & Loyalty Tier</label>
+                            <span id="posDiscountBadge" class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-forest-600 text-white">5% OFF</span>
+                        </div>
+                        <select id="posCustomerSelect" onchange="updateCartTotals()" class="w-full px-2.5 py-1.5 text-sm rounded-lg border border-forest-300 bg-white text-slate-800 font-medium focus:outline-none">
+                            <!-- Populated by JS -->
+                        </select>
+                        <p id="posCustomerMeta" class="text-[11px] text-slate-600 mt-1.5">Lifetime Spend: $150.00 • Phone: 0987654321</p>
+                    </div>
+
+                    <!-- Cart Line Items -->
+                    <div id="posCartList" class="flex-1 my-4 space-y-2.5 max-h-[300px] overflow-y-auto custom-scroll pr-1">
+                        <!-- Populated by JS -->
+                    </div>
+
+                    <!-- Financial Summary Breakdown -->
+                    <div class="border-t border-slate-200 pt-3.5 space-y-1.5 text-sm">
+                        <div class="flex justify-between text-slate-600">
+                            <span>Subtotal (<span id="cartItemCount">0</span> items):</span>
+                            <span id="cartSubtotal" class="font-medium text-slate-800">$0.00</span>
+                        </div>
+                        <div class="flex justify-between text-emerald-700 text-xs font-semibold">
+                            <span id="cartDiscountLabel">Loyalty Discount (SILVER 5%):</span>
+                            <span id="cartDiscountAmount">-$0.00</span>
+                        </div>
+                        <div class="flex justify-between text-base font-bold text-slate-900 pt-2 border-t border-slate-100">
+                            <span>Total Payable:</span>
+                            <span id="cartFinalTotal" class="text-xl text-forest-700">$0.00</span>
+                        </div>
+                    </div>
+
+                    <!-- Confirm & Pay CTA -->
+                    <button onclick="processPosCheckout()" class="mt-4 w-full py-3 px-4 rounded-xl bg-forest-700 hover:bg-forest-600 active:bg-forest-800 text-white font-bold text-sm shadow-md hover:shadow-lg transition flex items-center justify-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        <span>Confirm & Pay Order</span>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- =================================================================== -->
+        <!-- TAB 2: CUSTOM BOUQUET BUILDER (BouquetBuilderDialog - Composite)    -->
+        <!-- =================================================================== -->
+        <section id="view-bouquet" class="tab-view hidden grid-cols-1 lg:grid-cols-12 gap-6 animate-fade">
+            <!-- Left 7 Cols: Stem & Wrapping Selector -->
+            <div class="lg:col-span-7 bg-white rounded-2xl shadow-sm border border-slate-200/80 p-5">
+                <div class="border-b border-slate-100 pb-3.5 mb-4">
+                    <div class="flex items-center justify-between">
+                        <h2 class="text-lg font-bold text-slate-800">Custom Bouquet Builder (Composite Pattern)</h2>
+                        <span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-amber-50 text-amber-800 border border-amber-200">Method Overloading Demo</span>
+                    </div>
+                    <p class="text-xs text-slate-500 mt-1">Demonstrates <code class="text-forest-700 font-semibold">Bouquet.addFlower(Flower)</code> (single stem) and <code class="text-forest-700 font-semibold">Bouquet.addFlower(Flower, int qty)</code> (batch stems) plus wrapping and labor fee.</p>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Custom Arrangement Name</label>
+                        <input id="bqName" type="text" value="Romantic Velvet Arrangement" oninput="renderBouquetPreview()" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm font-medium focus:outline-none focus:border-forest-600">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Select Wrapping / Vase Accessory</label>
+                        <select id="bqAccessorySelect" onchange="renderBouquetPreview()" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm bg-white font-medium focus:outline-none focus:border-forest-600">
+                            <!-- Populated by JS -->
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Add Flower Stems Controls -->
+                <div class="bg-slate-50 rounded-xl p-4 border border-slate-200/80 mb-4">
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-slate-700 mb-3">Add Fresh Flower Stems to Recipe</h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-12 gap-2.5 items-end">
+                        <div class="sm:col-span-6">
+                            <label class="block text-xs text-slate-600 mb-1">Flower Variety</label>
+                            <select id="bqFlowerSelect" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm bg-white">
+                                <!-- Populated by JS -->
+                            </select>
+                        </div>
+                        <div class="sm:col-span-2">
+                            <label class="block text-xs text-slate-600 mb-1">Batch Qty</label>
+                            <input id="bqStemQty" type="number" min="1" max="50" value="6" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm">
+                        </div>
+                        <div class="sm:col-span-4 flex gap-1.5">
+                            <button onclick="addStemToBouquet(false)" title="Calls addFlower(Flower f)" class="flex-1 py-2 px-2.5 rounded-lg bg-white border border-forest-600 text-forest-700 hover:bg-forest-50 text-xs font-bold transition">
+                                +1 Stem
+                            </button>
+                            <button onclick="addStemToBouquet(true)" title="Calls addFlower(Flower f, int qty)" class="flex-1 py-2 px-2.5 rounded-lg bg-forest-700 hover:bg-forest-600 text-white text-xs font-bold transition">
+                                +Batch Qty
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Labor Fee Control (Access Controlled by Role!) -->
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-xl bg-amber-50/70 border border-amber-200">
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs font-bold text-slate-800">Artisanal Assembly Labor Fee ($)</span>
+                            <span id="laborLockBadge" class="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-200 text-amber-900">LOCKED (FLORIST)</span>
+                        </div>
+                        <p class="text-[11px] text-slate-600 mt-0.5">Protected by <code class="font-semibold">Staff.canModifyPrice()</code> — only Store Managers can alter base assembly fees.</p>
+                    </div>
+                    <input id="bqLaborFee" type="number" step="1.0" min="0" value="15.00" oninput="renderBouquetPreview()" disabled class="w-28 px-3 py-1.5 rounded-lg border border-amber-300 bg-white text-sm font-bold text-slate-800 disabled:bg-slate-100 disabled:text-slate-500">
+                </div>
+            </div>
+
+            <!-- Right 5 Cols: Live Bill of Materials & Composite Costing -->
+            <div class="lg:col-span-5 bg-white rounded-2xl shadow-sm border border-slate-200/80 p-5 flex flex-col justify-between">
+                <div>
+                    <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                        <div>
+                            <h3 class="text-base font-bold text-slate-800">Bouquet Bill-of-Materials (BOM)</h3>
+                            <p class="text-xs text-slate-500">Live execution of <code class="text-forest-700">Bouquet.getCalculatedPrice()</code></p>
+                        </div>
+                        <button onclick="resetBouquetBuilder()" class="text-xs text-rose-600 font-semibold hover:underline">Reset Recipe</button>
+                    </div>
+
+                    <!-- Stems Table -->
+                    <div id="bqRecipeList" class="my-4 space-y-2 max-h-[260px] overflow-y-auto custom-scroll">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+
+                <div class="border-t border-slate-200 pt-3.5 space-y-2 text-sm">
+                    <div class="flex justify-between text-slate-600">
+                        <span>Constituent Stems Cost:</span>
+                        <span id="bqStemsCost" class="font-medium text-slate-800">$0.00</span>
+                    </div>
+                    <div class="flex justify-between text-slate-600">
+                        <span>Wrapping Accessory:</span>
+                        <span id="bqWrapCost" class="font-medium text-slate-800">$0.00</span>
+                    </div>
+                    <div class="flex justify-between text-slate-600">
+                        <span>Assembly Labor Fee:</span>
+                        <span id="bqLaborCost" class="font-medium text-slate-800">$15.00</span>
+                    </div>
+                    <div class="flex justify-between text-base font-bold text-slate-900 pt-2 border-t border-slate-100">
+                        <span>Composite Bouquet Price:</span>
+                        <span id="bqTotalCost" class="text-xl text-forest-700">$15.00</span>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-3">
+                        <button onclick="saveCustomBouquetToCatalog(false)" class="py-2.5 px-3 rounded-xl border border-forest-600 text-forest-700 hover:bg-forest-50 font-bold text-xs transition">
+                            Save to Catalog Only
+                        </button>
+                        <button onclick="saveCustomBouquetToCatalog(true)" class="py-2.5 px-3 rounded-xl bg-forest-700 hover:bg-forest-600 text-white font-bold text-xs shadow-sm transition">
+                            Save & Add to POS Cart
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- =================================================================== -->
+        <!-- TAB 3: PERISHABLE INVENTORY & ACCESS CONTROL (InventoryReportPage)  -->
+        <!-- =================================================================== -->
+        <section id="view-inventory" class="tab-view hidden space-y-6 animate-fade">
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-5">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-100">
+                    <div>
+                        <div class="flex items-center gap-2.5">
+                            <h2 class="text-lg font-bold text-slate-800">Perishable Stock & Shelf-Life Audit</h2>
+                            <span id="invAccessBadge" class="text-xs font-bold px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800">FLORIST MODE: Price Editing Locked</span>
+                        </div>
+                        <p class="text-xs text-slate-500 mt-0.5">Monitors <code class="text-forest-700">IPerishable.isFresh()</code> based on <code class="text-slate-700">ChronoUnit.DAYS.between(harvestedDate, LocalDate.now()) &lt;= vaseLifeDays</code>.</p>
+                    </div>
+
+                    <!-- Filter Buttons -->
+                    <div class="flex flex-wrap items-center gap-2">
+                        <button onclick="setInventoryFilter('ALL')" id="inv-filter-ALL" class="inv-filter-btn px-3 py-1.5 rounded-lg text-xs font-bold bg-forest-700 text-white">All Stock</button>
+                        <button onclick="setInventoryFilter('FRESH')" id="inv-filter-FRESH" class="inv-filter-btn px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-100 text-slate-700 hover:bg-slate-200">Fresh Only</button>
+                        <button onclick="setInventoryFilter('EXPIRED')" id="inv-filter-EXPIRED" class="inv-filter-btn px-3 py-1.5 rounded-lg text-xs font-bold bg-rose-50 text-rose-700 hover:bg-rose-100">Near-Expiry (40% Off)</button>
+                        <button onclick="setInventoryFilter('LOW')" id="inv-filter-LOW" class="inv-filter-btn px-3 py-1.5 rounded-lg text-xs font-bold bg-amber-50 text-amber-800 hover:bg-amber-100">Low Stock (&le; 20)</button>
+                    </div>
+                </div>
+
+                <!-- Inventory Table -->
+                <div class="overflow-x-auto mt-4">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="border-b border-slate-200 text-[11px] uppercase tracking-wider text-slate-500 bg-slate-50/80">
+                                <th class="py-3 px-3">Item ID</th>
+                                <th class="py-3 px-3">Variety Name</th>
+                                <th class="py-3 px-3">Color / Origin</th>
+                                <th class="py-3 px-3">Harvest Date</th>
+                                <th class="py-3 px-3">Vase Life</th>
+                                <th class="py-3 px-3">Base Price</th>
+                                <th class="py-3 px-3">Effective Price</th>
+                                <th class="py-3 px-3">Stock Qty</th>
+                                <th class="py-3 px-3">Freshness Status</th>
+                                <th class="py-3 px-3 text-right">Actions (Role Controlled)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="inventoryTableBody" class="divide-y divide-slate-100 text-sm">
+                            <!-- Populated by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Add New Flower Variety Card (Manager Only or Demo Alert) -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-5">
+                <div class="flex items-center justify-between mb-3">
+                    <div>
+                        <h3 class="text-base font-bold text-slate-800">Register Incoming Wholesale Flower Batch</h3>
+                        <p class="text-xs text-slate-500">Inserts into PostgreSQL <code class="text-forest-700">ITEM</code> and <code class="text-forest-700">FLOWER</code> tables via <code class="text-forest-700">FlowerDatabaseManager</code>.</p>
+                    </div>
+                </div>
+                <form onsubmit="handleAddNewFlower(event)" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-7 gap-3 items-end">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Flower ID</label>
+                        <input id="newFlwId" type="text" placeholder="e.g. FLW07" required class="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Variety Name</label>
+                        <input id="newFlwName" type="text" placeholder="Pink Peony" required class="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Color & Origin</label>
+                        <input id="newFlwColor" type="text" placeholder="Blush / Holland" required class="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Base Price ($)</label>
+                        <input id="newFlwPrice" type="number" step="0.1" min="0.5" value="4.50" required class="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Vase Life (Days)</label>
+                        <input id="newFlwVase" type="number" min="1" max="30" value="7" required class="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Initial Stock</label>
+                        <input id="newFlwStock" type="number" min="1" value="60" required class="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm">
+                    </div>
+                    <button type="submit" class="py-2 px-4 rounded-lg bg-forest-700 hover:bg-forest-600 text-white font-bold text-sm transition">
+                        + Add Batch
+                    </button>
+                </form>
+            </div>
+        </section>
+
+        <!-- =================================================================== -->
+        <!-- TAB 4: CUSTOMER & LOYALTY CRM (CustomerManagementPage)              -->
+        <!-- =================================================================== -->
+        <section id="view-customers" class="tab-view hidden grid-cols-1 lg:grid-cols-12 gap-6 animate-fade">
+            <!-- Left 8 Cols: Customer Directory -->
+            <div class="lg:col-span-8 bg-white rounded-2xl shadow-sm border border-slate-200/80 p-5">
+                <div class="flex items-center justify-between pb-3.5 border-b border-slate-100">
+                    <div>
+                        <h2 class="text-lg font-bold text-slate-800">Registered Customer & VIP Loyalty Directory</h2>
+                        <p class="text-xs text-slate-500">Implements <code class="text-forest-700">IDiscountable.applyDiscount(subtotal)</code> across STANDARD (0%), SILVER (5%), and GOLD (15%) tiers.</p>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto mt-4">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="border-b border-slate-200 text-[11px] uppercase tracking-wider text-slate-500 bg-slate-50">
+                                <th class="py-3 px-3">Customer ID</th>
+                                <th class="py-3 px-3">Full Name</th>
+                                <th class="py-3 px-3">Phone Number</th>
+                                <th class="py-3 px-3">Loyalty Tier</th>
+                                <th class="py-3 px-3">Discount Rate</th>
+                                <th class="py-3 px-3">Total Lifetime Spent</th>
+                                <th class="py-3 px-3 text-right">Quick Select</th>
+                            </tr>
+                        </thead>
+                        <tbody id="customerTableBody" class="divide-y divide-slate-100 text-sm">
+                            <!-- Populated by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Right 4 Cols: Register New Customer (Compatible with both JS & Spring Boot POST /customers/register) -->
+            <div class="lg:col-span-4 bg-white rounded-2xl shadow-sm border border-slate-200/80 p-5">
+                <h3 class="text-base font-bold text-slate-800 pb-3 border-b border-slate-100">Register New Loyalty Customer</h3>
+                <p class="text-xs text-slate-500 mt-2 mb-4">Maps to <code class="text-forest-700">CustomerWebController.registerCustomer()</code></p>
+
+                <form onsubmit="handleRegisterCustomer(event)" th:action="@{/customers/register}" method="post" class="space-y-3.5">
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Customer ID</label>
+                        <input id="regCustId" name="customerId" type="text" placeholder="e.g. CUST04" required class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Full Name</label>
+                        <input id="regCustName" name="fullName" type="text" placeholder="e.g. Le Thi Hoa" required class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Phone Number</label>
+                        <input id="regCustPhone" name="phone" type="text" placeholder="e.g. 0912345678" required class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Initial Loyalty Tier</label>
+                        <select id="regCustTier" name="tier" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm bg-white">
+                            <option value="STANDARD">STANDARD (0% Discount)</option>
+                            <option value="SILVER">SILVER (5% Discount)</option>
+                            <option value="GOLD">GOLD (15% Discount)</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="w-full py-2.5 px-4 rounded-xl bg-forest-700 hover:bg-forest-600 text-white font-bold text-sm transition shadow-sm">
+                        Register Customer Profile
+                    </button>
+                </form>
+            </div>
+        </section>
+
+        <!-- =================================================================== -->
+        <!-- TAB 5: DATABASE TRANSACTIONS & SQL LOG (PostgreSQL 3-Tier Audit)    -->
+        <!-- =================================================================== -->
+        <section id="view-database" class="tab-view hidden space-y-6 animate-fade">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <!-- Left 7 Cols: Order History Table (ORDERS & ORDER_ITEM) -->
+                <div class="lg:col-span-7 bg-white rounded-2xl shadow-sm border border-slate-200/80 p-5">
+                    <h2 class="text-lg font-bold text-slate-800 pb-3 border-b border-slate-100">Processed Orders Table (<code class="text-forest-700">ORDERS</code> & <code class="text-forest-700">ORDER_ITEM</code>)</h2>
+                    <div id="ordersHistoryContainer" class="mt-4 space-y-3 max-h-[480px] overflow-y-auto custom-scroll pr-1">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+
+                <!-- Right 5 Cols: Live JDBC SQL Transaction Stream -->
+                <div class="lg:col-span-5 bg-slate-900 text-slate-100 rounded-2xl shadow-sm p-5 flex flex-col">
+                    <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+                        <div>
+                            <h3 class="text-sm font-bold text-emerald-400 font-mono">PostgreSQL JDBC Transaction Stream</h3>
+                            <p class="text-[11px] text-slate-400">Real-time SQL statements executed by Tier 3 Managers</p>
+                        </div>
+                        <span class="px-2 py-0.5 text-[10px] font-mono bg-emerald-500/20 text-emerald-300 rounded border border-emerald-500/30">flowershop_db</span>
+                    </div>
+                    <div id="sqlLogConsole" class="flex-1 mt-3 font-mono text-xs space-y-2.5 overflow-y-auto max-h-[450px] custom-scroll pr-1">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- =================================================================== -->
+    <!-- MODAL 1: INVOICE RECEIPT DIALOG                                     -->
+    <!-- =================================================================== -->
+    <div id="receiptModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 animate-fade">
+            <div class="text-center border-b border-dashed border-slate-300 pb-4">
+                <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800">ORDER PAID & COMMITTED</span>
+                <h3 class="font-serif text-2xl font-bold text-forest-800 mt-2">BlossomFlow Boutique</h3>
+                <p class="text-xs text-slate-500">Official Point-of-Sale Receipt</p>
+            </div>
+            <div id="receiptBody" class="py-4 text-xs space-y-2 border-b border-dashed border-slate-300">
+                <!-- Populated by JS -->
+            </div>
+            <div class="pt-4 flex gap-3">
+                <button onclick="closeReceiptModal()" class="flex-1 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition">
+                    Close Window
+                </button>
+                <button onclick="window.print()" class="flex-1 py-2.5 rounded-xl bg-forest-700 hover:bg-forest-600 text-white font-bold text-xs transition">
+                    Print Receipt
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- =================================================================== -->
+    <!-- MODAL 2: SPRING BOOT INTEGRATION GUIDE                              -->
+    <!-- =================================================================== -->
+    <div id="springModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-2xl w-full p-6 shadow-2xl border border-slate-200 animate-fade">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-200">
+                <h3 class="text-lg font-bold text-slate-800">How to Use This File in Spring Boot</h3>
+                <button onclick="closeSpringModal()" class="text-slate-400 hover:text-slate-700 font-bold text-sm">✕</button>
+            </div>
+            <div class="py-4 text-xs sm:text-sm text-slate-600 space-y-3">
+                <p>This single file is designed as a <strong>Dual-Mode Hybrid Template</strong>:</p>
+                <ol class="list-decimal list-inside space-y-2 text-slate-700">
+                    <li><strong>Drop-in Spring Boot View:</strong> Save this file directly as <code class="bg-slate-100 px-1.5 py-0.5 rounded text-forest-700 font-mono">src/main/resources/templates/dashboard.html</code>.</li>
+                    <li><strong>Full Interactive SPA Mode:</strong> All 5 tabs (POS Checkout, Custom Bouquet Builder, Perishable Stock Audit, Customer CRM, and SQL Transaction Log) work immediately in your browser with zero page reloads.</li>
+                    <li><strong>Native Server POST Support:</strong> Expanding the <em>"Spring Boot Direct Server POST Form"</em> at the bottom of Tab 1 or submitting the Customer Registration form triggers your Spring Boot <code class="bg-slate-100 px-1.5 py-0.5 rounded text-forest-700 font-mono">@PostMapping("/orders/checkout")</code> and <code class="bg-slate-100 px-1.5 py-0.5 rounded text-forest-700 font-mono">@PostMapping("/customers/register")</code> endpoints.</li>
+                </ol>
+            </div>
+            <div class="pt-3 border-t border-slate-100 flex justify-end">
+                <button onclick="closeSpringModal()" class="px-5 py-2 rounded-xl bg-forest-700 text-white font-bold text-xs">Got It</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- =================================================================== -->
+    <!-- APPLICATION DOMAIN LOGIC & 3-TIER CONTROLLER SIMULATION             -->
+    <!-- =================================================================== -->
+    <script>
+        // --- CURRENT STAFF SESSION (Part VII Access Control) ---
+        let activeStaff = {
+            id: 'ST02',
+            fullName: 'Bob Florist',
+            username: 'bob',
+            role: 'FLORIST' // 'FLORIST' or 'MANAGER'
+        };
+
+        // --- TIER 2 & 3 SEED DATA (Matches schema.sql) ---
+        const todayStr = new Date().toISOString().split('T')[0];
+        function daysAgo(days) {
+            const d = new Date();
+            d.setDate(d.getDate() - days);
+            return d.toISOString().split('T')[0];
+        }
+
+        let flowers = [
+            { id: 'FLW01', name: 'Ecuadorian Red Rose', type: 'FLOWER', basePrice: 2.50, color: 'Deep Red', vaseLifeDays: 7, harvestedDate: daysAgo(1), stockQty: 150, origin: 'Ecuador' },
+            { id: 'FLW02', name: 'Royal White Lily', type: 'FLOWER', basePrice: 3.80, color: 'Pure White', vaseLifeDays: 10, harvestedDate: daysAgo(0), stockQty: 80, origin: 'Da Lat' },
+            { id: 'FLW03', name: 'Dutch Golden Tulip', type: 'FLOWER', basePrice: 3.00, color: 'Golden Yellow', vaseLifeDays: 5, harvestedDate: daysAgo(7), stockQty: 18, origin: 'Netherlands' },
+            { id: 'FLW04', name: 'Pastel Hydrangea', type: 'FLOWER', basePrice: 5.50, color: 'Sky Blue', vaseLifeDays: 6, harvestedDate: daysAgo(2), stockQty: 45, origin: 'Da Lat' },
+            { id: 'FLW05', name: 'Blush Pink Peony', type: 'FLOWER', basePrice: 6.00, color: 'Soft Pink', vaseLifeDays: 5, harvestedDate: daysAgo(6), stockQty: 12, origin: 'Holland' },
+            { id: 'FLW06', name: 'Silver Dollar Eucalyptus', type: 'FLOWER', basePrice: 1.80, color: 'Sage Green', vaseLifeDays: 14, harvestedDate: daysAgo(3), stockQty: 110, origin: 'Da Lat' }
+        ];
+
+        let accessories = [
+            { id: 'ACC01', name: 'French Satin Ribbon', type: 'ACCESSORY', basePrice: 1.50, material: 'Silk', accessoryType: 'RIBBON', stockQty: 50 },
+            { id: 'ACC02', name: 'Artisanal Kraft Wrapping', type: 'ACCESSORY', basePrice: 2.50, material: 'Recycled Paper', accessoryType: 'WRAP', stockQty: 75 },
+            { id: 'ACC03', name: 'Minimalist Ceramic Vase', type: 'ACCESSORY', basePrice: 12.00, material: 'Ceramic', accessoryType: 'VASE', stockQty: 25 }
+        ];
+
+        let customBouquets = [
+            {
+                id: 'BQ01',
+                name: 'Classic Anniversary Dozen',
+                type: 'BOUQUET',
+                laborFee: 12.00,
+                wrapping: accessories[0],
+                stems: [{ flowerId: 'FLW01', name: 'Ecuadorian Red Rose', qty: 12, unitPrice: 2.50 }],
+                stockQty: 10
+            }
+        ];
+
+        let customers = [
+            { id: 'CUST01', fullName: 'Jane Doe', phone: '0987654321', membershipTier: 'SILVER', totalSpent: 150.00 },
+            { id: 'CUST02', fullName: 'Minh Nguyen', phone: '0901122334', membershipTier: 'GOLD', totalSpent: 540.00 },
+            { id: 'CUST03', fullName: 'Walk-in Guest', phone: '0000000000', membershipTier: 'STANDARD', totalSpent: 0.00 }
+        ];
+
+        let cart = [
+            { itemId: 'FLW01', name: 'Ecuadorian Red Rose', itemType: 'FLOWER', unitPrice: 2.50, qty: 6 }
+        ];
+
+        let bouquetBuilderStems = [
+            { flowerId: 'FLW01', qty: 6 },
+            { flowerId: 'FLW02', qty: 3 }
+        ];
+
+        let ordersHistory = [
+            {
+                orderId: 'ORD-8F29A10B',
+                customerName: 'Jane Doe (SILVER)',
+                staffName: 'Bob Florist',
+                timestamp: '2026-11-13 09:45:12',
+                total: 27.08,
+                status: 'PAID',
+                lines: [
+                    { name: 'Ecuadorian Red Rose', qty: 10, unitPrice: 2.50, subtotal: 25.00 },
+                    { name: 'French Satin Ribbon', qty: 1, unitPrice: 1.50, subtotal: 1.50 }
+                ]
+            }
+        ];
+
+        let sqlLogs = [
+            `-- Connection Pool Initialized: jdbc:postgresql://localhost:5432/flowershop_db`,
+            `SELECT i.item_id, i.item_name, i.base_price, f.color, f.vase_life_days, f.harvested_date, f.stock_qty FROM ITEM i JOIN FLOWER f ON i.item_id = f.flower_id;`
+        ];
+
+        let currentInventoryFilter = 'ALL';
+
+        // --- DOMAIN POLYMORPHIC METHODS (Matches Flower.java & Bouquet.java) ---
+        function getDaysPassed(harvestDateStr) {
+            const harvest = new Date(harvestDateStr);
+            const now = new Date(todayStr);
+            return Math.max(0, Math.round((now - harvest) / (1000 * 60 * 60 * 24)));
+        }
+
+        function isFlowerFresh(flower) {
+            return getDaysPassed(flower.harvestedDate) <= flower.vaseLifeDays;
+        }
+
+        function getCalculatedPrice(item) {
+            if (item.type === 'FLOWER') {
+                return isFlowerFresh(item) ? item.basePrice : +(item.basePrice * 0.60).toFixed(2);
+            }
+            if (item.type === 'ACCESSORY') {
+                return item.basePrice;
+            }
+            if (item.type === 'BOUQUET') {
+                const stemsSum = item.stems.reduce((acc, s) => acc + (s.unitPrice * s.qty), 0);
+                const wrapCost = item.wrapping ? item.wrapping.basePrice : 0;
+                return +(stemsSum + wrapCost + item.laborFee).toFixed(2);
+            }
+            return item.basePrice || 0;
+        }
+
+        function getDiscountRate(tier) {
+            if (tier === 'GOLD') return 0.15;
+            if (tier === 'SILVER') return 0.05;
+            return 0.0;
+        }
+
+        // --- ROLE SWITCHER (Part VII Access Control) ---
+        function switchStaffRole(role) {
+            if (role === 'MANAGER') {
+                activeStaff = { id: 'ST01', fullName: 'Alice Admin', username: 'admin', role: 'MANAGER' };
+            } else {
+                activeStaff = { id: 'ST02', fullName: 'Bob Florist', username: 'bob', role: 'FLORIST' };
+            }
+
+            const badge = document.getElementById('roleBadge');
+            const laborInput = document.getElementById('bqLaborFee');
+            const laborLockBadge = document.getElementById('laborLockBadge');
+            const invAccessBadge = document.getElementById('invAccessBadge');
+
+            if (activeStaff.role === 'MANAGER') {
+                badge.textContent = 'MANAGER';
+                badge.className = 'px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-400/20 text-emerald-300 border border-emerald-400/30';
+                laborInput.disabled = false;
+                laborLockBadge.textContent = 'UNLOCKED (MANAGER)';
+                laborLockBadge.className = 'text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-200 text-emerald-900';
+                invAccessBadge.textContent = 'MANAGER MODE: Full Price & Stock Override Enabled';
+                invAccessBadge.className = 'text-xs font-bold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800';
+                showToast(`Switched to ${activeStaff.fullName} (MANAGER). Full price & labor fee controls unlocked.`, 'success');
+            } else {
+                badge.textContent = 'FLORIST';
+                badge.className = 'px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-400/20 text-amber-300 border border-amber-400/30';
+                laborInput.disabled = true;
+                laborLockBadge.textContent = 'LOCKED (FLORIST)';
+                laborLockBadge.className = 'text-[10px] font-bold px-2 py-0.5 rounded bg-amber-200 text-amber-900';
+                invAccessBadge.textContent = 'FLORIST MODE: Price Editing Locked';
+                invAccessBadge.className = 'text-xs font-bold px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800';
+                showToast(`Switched to ${activeStaff.fullName} (FLORIST). Base price modifications restricted.`, 'info');
+            }
+
+            renderInventoryTable();
+        }
+
+        // --- TAB NAVIGATION ---
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-view').forEach(el => {
+                el.classList.add('hidden');
+                el.classList.remove('grid');
+            });
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.className = 'tab-btn px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold transition whitespace-nowrap text-forest-100 hover:bg-forest-700';
+            });
+
+            const targetView = document.getElementById(`view-${tabId}`);
+            targetView.classList.remove('hidden');
+            if (tabId === 'pos' || tabId === 'bouquet' || tabId === 'customers') {
+                targetView.classList.add('grid');
+            }
+
+            const activeBtn = document.getElementById(`tab-${tabId}`);
+            activeBtn.className = 'tab-btn px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold transition whitespace-nowrap bg-forest-100 text-forest-900 shadow-sm';
+        }
+
+        // --- RENDER POS CATALOG ---
+        function renderPosCatalog() {
+            const query = (document.getElementById('posSearchInput').value || '').toLowerCase();
+            const filterType = document.getElementById('posFilterType').value;
+            const container = document.getElementById('posCatalogGrid');
+
+            const allItems = [
+                ...flowers.map(f => ({ ...f, effectivePrice: getCalculatedPrice(f), fresh: isFlowerFresh(f) })),
+                ...customBouquets.map(b => ({ ...b, effectivePrice: getCalculatedPrice(b), fresh: true, color: 'Composite Arrangement', origin: 'In-House' })),
+                ...accessories.map(a => ({ ...a, effectivePrice: getCalculatedPrice(a), fresh: true, color: a.material, origin: a.accessoryType }))
+            ];
+
+            const filtered = allItems.filter(item => {
+                const matchesType = filterType === 'ALL' || item.type === filterType;
+                const matchesQuery = item.name.toLowerCase().includes(query) ||
+                                     item.id.toLowerCase().includes(query) ||
+                                     (item.color && item.color.toLowerCase().includes(query));
+                return matchesType && matchesQuery;
+            });
+
+            if (filtered.length === 0) {
+                container.innerHTML = `<div class="col-span-full py-10 text-center text-slate-400 text-sm">No matching catalog items found.</div>`;
+                return;
+            }
+
+            container.innerHTML = filtered.map(item => {
+                const isClearance = item.type === 'FLOWER' && !item.fresh;
+                const lowStock = item.stockQty <= 20;
+
+                return `
+                <div class="rounded-xl border ${isClearance ? 'border-rose-200 bg-rose-50/30' : 'border-slate-200 bg-white'} p-3.5 flex flex-col justify-between hover:shadow-md transition">
+                    <div>
+                        <div class="flex items-center justify-between gap-1 mb-1.5">
+                            <span class="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-700">${item.id}</span>
+                            ${item.type === 'FLOWER' ? (
+                                isClearance
+                                ? `<span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-100 text-rose-700">40% Clearance</span>`
+                                : `<span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">Fresh Stem</span>`
+                            ) : `<span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">${item.type}</span>`}
+                        </div>
+                        <h4 class="font-bold text-slate-800 text-sm leading-snug">${item.name}</h4>
+                        <p class="text-xs text-slate-500 mt-0.5">${item.color} • ${item.origin}</p>
+                    </div>
+
+                    <div class="mt-3 pt-2.5 border-t border-slate-100 flex items-end justify-between">
+                        <div>
+                            <span class="block text-[10px] text-slate-400">Unit Price</span>
+                            <div class="flex items-baseline gap-1.5">
+                                <span class="text-base font-bold ${isClearance ? 'text-rose-600' : 'text-forest-700'}">$${item.effectivePrice.toFixed(2)}</span>
+                                ${isClearance ? `<span class="text-xs line-through text-slate-400">$${item.basePrice.toFixed(2)}</span>` : ''}
+                            </div>
+                            <span class="text-[11px] ${lowStock ? 'text-amber-700 font-semibold' : 'text-slate-500'}">Stock: ${item.stockQty}</span>
+                        </div>
+
+                        <div class="flex items-center gap-1.5">
+                            <input id="qty-${item.id}" type="number" min="1" max="${item.stockQty}" value="1" class="w-12 px-1.5 py-1 text-xs rounded-lg border border-slate-300 text-center">
+                            <button onclick="addToCart('${item.id}', '${item.type}')" ${item.stockQty <= 0 ? 'disabled' : ''} class="px-2.5 py-1.5 rounded-lg bg-forest-700 hover:bg-forest-600 disabled:bg-slate-300 text-white text-xs font-bold transition">
+                                + Add
+                            </button>
+                        </div>
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        // --- CART OPERATIONS ---
+        function addToCart(itemId, itemType) {
+            const qtyInput = document.getElementById(`qty-${itemId}`);
+            const qty = parseInt(qtyInput ? qtyInput.value : 1, 10);
+
+            let sourceItem = null;
+            if (itemType === 'FLOWER') sourceItem = flowers.find(f => f.id === itemId);
+            if (itemType === 'ACCESSORY') sourceItem = accessories.find(a => a.id === itemId);
+            if (itemType === 'BOUQUET') sourceItem = customBouquets.find(b => b.id === itemId);
+
+            if (!sourceItem || isNaN(qty) || qty <= 0) return;
+
+            const existing = cart.find(c => c.itemId === itemId);
+            const currentInCart = existing ? existing.qty : 0;
+
+            if (currentInCart + qty > sourceItem.stockQty) {
+                showToast(`Insufficient stock for ${sourceItem.name} (Available: ${sourceItem.stockQty}).`, 'error');
+                return;
+            }
+
+            const unitPrice = getCalculatedPrice(sourceItem);
+            if (existing) {
+                existing.qty += qty;
+                existing.unitPrice = unitPrice;
+            } else {
+                cart.push({
+                    itemId: sourceItem.id,
+                    name: sourceItem.name,
+                    itemType: sourceItem.type,
+                    unitPrice: unitPrice,
+                    qty: qty
+                });
+            }
+
+            renderCart();
+            showToast(`Added ${qty}x ${sourceItem.name} to order cart.`, 'success');
+        }
+
+        function removeFromCart(itemId) {
+            cart = cart.filter(c => c.itemId !== itemId);
+            renderCart();
+        }
+
+        function clearCart() {
+            cart = [];
+            renderCart();
+        }
+
+        function renderCustomerDropdown() {
+            const select = document.getElementById('posCustomerSelect');
+            const currentVal = select.value || 'CUST01';
+            select.innerHTML = customers.map(c =>
+                `<option value="${c.id}" ${c.id === currentVal ? 'selected' : ''}>${c.fullName} (${c.membershipTier})</option>`
+            ).join('');
+            updateCartTotals();
+        }
+
+        function renderCart() {
+            const list = document.getElementById('posCartList');
+            if (cart.length === 0) {
+                list.innerHTML = `<div class="py-8 text-center text-xs text-slate-400 border border-dashed border-slate-200 rounded-xl">Your POS cart is empty. Select stems or arrangements from the catalog.</div>`;
+            } else {
+                list.innerHTML = cart.map(item => `
+                    <div class="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 border border-slate-200/70">
+                        <div>
+                            <div class="flex items-center gap-1.5">
+                                <span class="text-xs font-bold text-slate-800">${item.name}</span>
+                                <span class="text-[10px] px-1.5 py-0.2 bg-white border border-slate-200 rounded text-slate-500">${item.itemType}</span>
+                            </div>
+                            <p class="text-xs text-slate-500">$${item.unitPrice.toFixed(2)} × ${item.qty} = <strong class="text-slate-800">$${(item.unitPrice * item.qty).toFixed(2)}</strong></p>
+                        </div>
+                        <button onclick="removeFromCart('${item.itemId}')" class="text-slate-400 hover:text-rose-600 p-1 text-xs font-bold">✕</button>
+                    </div>
+                `).join('');
+            }
+            updateCartTotals();
+        }
+
+        function updateCartTotals() {
+            const custId = document.getElementById('posCustomerSelect').value;
+            const customer = customers.find(c => c.id === custId) || customers[0];
+            const rate = getDiscountRate(customer.membershipTier);
+
+            document.getElementById('posDiscountBadge').textContent = `${Math.round(rate * 100)}% OFF`;
+            document.getElementById('posCustomerMeta').textContent = `ID: ${customer.id} • Lifetime Spend: $${customer.totalSpent.toFixed(2)} • Phone: ${customer.phone}`;
+
+            const subtotal = cart.reduce((sum, item) => sum + (item.unitPrice * item.qty), 0);
+            const discountAmount = subtotal * rate;
+            const finalTotal = subtotal - discountAmount;
+
+            document.getElementById('cartItemCount').textContent = cart.reduce((sum, i) => sum + i.qty, 0);
+            document.getElementById('cartSubtotal').textContent = `$${subtotal.toFixed(2)}`;
+            document.getElementById('cartDiscountLabel').textContent = `Loyalty Discount (${customer.membershipTier} ${Math.round(rate * 100)}%):`;
+            document.getElementById('cartDiscountAmount').textContent = `-$${discountAmount.toFixed(2)}`;
+            document.getElementById('cartFinalTotal').textContent = `$${finalTotal.toFixed(2)}`;
+        }
+
+        // --- PROCESS POS CHECKOUT (Simulates OrderController & OrderDatabaseManager) ---
+        function processPosCheckout() {
+            if (cart.length === 0) {
+                showToast('Cannot process checkout: Order cart is empty.', 'error');
+                return;
+            }
+
+            const custId = document.getElementById('posCustomerSelect').value;
+            const customer = customers.find(c => c.id === custId) || customers[0];
+            const rate = getDiscountRate(customer.membershipTier);
+
+            const subtotal = cart.reduce((sum, item) => sum + (item.unitPrice * item.qty), 0);
+            const finalTotal = +(subtotal * (1 - rate)).toFixed(2);
+            const orderId = 'ORD-' + Math.random().toString(16).substring(2, 10).toUpperCase();
+
+            // Deduct Stock & Log SQL
+            sqlLogs.unshift(`BEGIN TRANSACTION; -- Order ${orderId}`);
+            cart.forEach(line => {
+                if (line.itemType === 'FLOWER') {
+                    const flw = flowers.find(f => f.id === line.itemId);
+                    if (flw) flw.stockQty = Math.max(0, flw.stockQty - line.qty);
+                    sqlLogs.unshift(`UPDATE FLOWER SET stock_qty = stock_qty - ${line.qty} WHERE flower_id = '${line.itemId}';`);
+                } else if (line.itemType === 'ACCESSORY') {
+                    const acc = accessories.find(a => a.id === line.itemId);
+                    if (acc) acc.stockQty = Math.max(0, acc.stockQty - line.qty);
+                } else if (line.itemType === 'BOUQUET') {
+                    const bq = customBouquets.find(b => b.id === line.itemId);
+                    if (bq) bq.stockQty = Math.max(0, bq.stockQty - line.qty);
+                }
+            });
+
+            customer.totalSpent = +(customer.totalSpent + finalTotal).toFixed(2);
+            sqlLogs.unshift(`INSERT INTO ORDERS (order_id, customer_id, staff_id, total_amount, order_status) VALUES ('${orderId}', '${customer.id}', '${activeStaff.id}', ${finalTotal}, 'PAID');`);
+            sqlLogs.unshift(`COMMIT;`);
+
+            const newOrder = {
+                orderId,
+                customerName: `${customer.fullName} (${customer.membershipTier})`,
+                staffName: activeStaff.fullName,
+                timestamp: new Date().toISOString().replace('T', ' ').substring(0, 19),
+                total: finalTotal,
+                status: 'PAID',
+                lines: cart.map(c => ({
+                    name: c.name,
+                    qty: c.qty,
+                    unitPrice: c.unitPrice,
+                    subtotal: +(c.unitPrice * c.qty).toFixed(2)
+                }))
+            };
+            ordersHistory.unshift(newOrder);
+
+            // Show Receipt Modal
+            showReceiptModal(newOrder, subtotal, subtotal - finalTotal);
+
+            cart = [];
+            refreshAllViews();
+        }
+
+        function showReceiptModal(order, subtotal, discount) {
+            const body = document.getElementById('receiptBody');
+            body.innerHTML = `
+                <div class="flex justify-between"><span>Order ID:</span><strong class="font-mono">${order.orderId}</strong></div>
+                <div class="flex justify-between"><span>Date:</span><span>${order.timestamp}</span></div>
+                <div class="flex justify-between"><span>Customer:</span><strong>${order.customerName}</strong></div>
+                <div class="flex justify-between"><span>Handled By:</span><span>${order.staffName}</span></div>
+                <div class="border-t border-slate-200 my-2 pt-2 space-y-1">
+                    ${order.lines.map(l => `
+                        <div class="flex justify-between">
+                            <span>${l.name} × ${l.qty}</span>
+                            <span class="font-medium">$${l.subtotal.toFixed(2)}</span>
+                        </div>
+                    `).join('')}
+                </div>
+                <div class="border-t border-slate-200 pt-2 space-y-1">
+                    <div class="flex justify-between text-slate-500"><span>Subtotal:</span><span>$${subtotal.toFixed(2)}</span></div>
+                    <div class="flex justify-between text-emerald-700"><span>VIP Discount:</span><span>-$${discount.toFixed(2)}</span></div>
+                    <div class="flex justify-between text-sm font-bold text-slate-900 pt-1"><span>Total Paid:</span><span class="text-forest-700">$${order.total.toFixed(2)}</span></div>
+                </div>
+            `;
+            const modal = document.getElementById('receiptModal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeReceiptModal() {
+            const modal = document.getElementById('receiptModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        // --- TAB 2: CUSTOM BOUQUET BUILDER (Composite Pattern) ---
+        function renderBouquetBuilderSelectors() {
+            const flwSelect = document.getElementById('bqFlowerSelect');
+            flwSelect.innerHTML = flowers.map(f =>
+                `<option value="${f.id}">${f.name} ($${getCalculatedPrice(f).toFixed(2)}/stem • Stock: ${f.stockQty})</option>`
+            ).join('');
+
+            const accSelect = document.getElementById('bqAccessorySelect');
+            accSelect.innerHTML = accessories.map(a =>
+                `<option value="${a.id}">${a.name} (+$${a.basePrice.toFixed(2)} • ${a.material})</option>`
+            ).join('');
+
+            renderBouquetPreview();
+        }
+
+        function addStemToBouquet(useBatchOverload) {
+            const flwId = document.getElementById('bqFlowerSelect').value;
+            const qty = useBatchOverload ? parseInt(document.getElementById('bqStemQty').value || 1, 10) : 1;
+            const flower = flowers.find(f => f.id === flwId);
+            if (!flower || qty <= 0) return;
+
+            const existing = bouquetBuilderStems.find(s => s.flowerId === flwId);
+            if (existing) {
+                existing.qty += qty;
+            } else {
+                bouquetBuilderStems.push({ flowerId: flwId, qty });
+            }
+
+            renderBouquetPreview();
+            const methodSig = useBatchOverload ? `Bouquet.addFlower(${flower.id}, ${qty})` : `Bouquet.addFlower(${flower.id})`;
+            showToast(`Invoked overloaded ${methodSig}`, 'info');
+        }
+
+        function removeStemFromBouquet(flwId) {
+            bouquetBuilderStems = bouquetBuilderStems.filter(s => s.flowerId !== flwId);
+            renderBouquetPreview();
+        }
+
+        function resetBouquetBuilder() {
+            bouquetBuilderStems = [];
+            renderBouquetPreview();
+        }
+
+        function renderBouquetPreview() {
+            const list = document.getElementById('bqRecipeList');
+            const accId = document.getElementById('bqAccessorySelect').value;
+            const accessory = accessories.find(a => a.id === accId) || accessories[0];
+            const laborFee = parseFloat(document.getElementById('bqLaborFee').value) || 0;
+
+            let stemsCost = 0;
+
+            if (bouquetBuilderStems.length === 0) {
+                list.innerHTML = `<div class="py-6 text-center text-xs text-slate-400 border border-dashed border-slate-200 rounded-xl">No flower stems in bouquet recipe yet.</div>`;
+            } else {
+                list.innerHTML = bouquetBuilderStems.map(s => {
+                    const flw = flowers.find(f => f.id === s.flowerId);
+                    if (!flw) return '';
+                    const unit = getCalculatedPrice(flw);
+                    const sub = unit * s.qty;
+                    stemsCost += sub;
+                    return `
+                        <div class="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 border border-slate-200/80 text-xs">
+                            <div>
+                                <span class="font-bold text-slate-800">${flw.name}</span>
+                                <span class="text-slate-500 block">$${unit.toFixed(2)}/stem × ${s.qty} stems = <strong>$${sub.toFixed(2)}</strong></span>
+                            </div>
+                            <button onclick="removeStemFromBouquet('${flw.id}')" class="text-rose-600 font-bold px-2">Remove</button>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            const wrapCost = accessory ? accessory.basePrice : 0;
+            const total = stemsCost + wrapCost + laborFee;
+
+            document.getElementById('bqStemsCost').textContent = `$${stemsCost.toFixed(2)}`;
+            document.getElementById('bqWrapCost').textContent = `$${wrapCost.toFixed(2)}`;
+            document.getElementById('bqLaborCost').textContent = `$${laborFee.toFixed(2)}`;
+            document.getElementById('bqTotalCost').textContent = `$${total.toFixed(2)}`;
+        }
+
+        function saveCustomBouquetToCatalog(andAddToCart) {
+            if (bouquetBuilderStems.length === 0) {
+                showToast('Add at least one flower stem to build a custom bouquet.', 'error');
+                return;
+            }
+            const name = document.getElementById('bqName').value.trim() || 'Custom Bouquet';
+            const accId = document.getElementById('bqAccessorySelect').value;
+            const accessory = accessories.find(a => a.id === accId) || accessories[0];
+            const laborFee = parseFloat(document.getElementById('bqLaborFee').value) || 15.0;
+            const newId = 'BQ0' + (customBouquets.length + 1);
+
+            const stemsData = bouquetBuilderStems.map(s => {
+                const f = flowers.find(fl => fl.id === s.flowerId);
+                return {
+                    flowerId: f.id,
+                    name: f.name,
+                    qty: s.qty,
+                    unitPrice: getCalculatedPrice(f)
+                };
+            });
+
+            const newBq = {
+                id: newId,
+                name: name,
+                type: 'BOUQUET',
+                laborFee: laborFee,
+                wrapping: accessory,
+                stems: stemsData,
+                stockQty: 5
+            };
+
+            customBouquets.push(newBq);
+            sqlLogs.unshift(`INSERT INTO ITEM (item_id, item_name, item_type, base_price) VALUES ('${newId}', '${name}', 'BOUQUET', ${getCalculatedPrice(newBq)});`);
+            sqlLogs.unshift(`INSERT INTO BOUQUET (bouquet_id, labor_fee, wrapping_id) VALUES ('${newId}', ${laborFee}, '${accessory.id}');`);
+
+            if (andAddToCart) {
+                cart.push({
+                    itemId: newBq.id,
+                    name: newBq.name,
+                    itemType: 'BOUQUET',
+                    unitPrice: getCalculatedPrice(newBq),
+                    qty: 1
+                });
+                switchTab('pos');
+            }
+
+            refreshAllViews();
+            showToast(`Custom Bouquet "${name}" (${newId}) created via Composite Pattern!`, 'success');
+        }
+
+        // --- TAB 3: PERISHABLE INVENTORY TABLE & ACCESS CONTROL ---
+        function setInventoryFilter(filter) {
+            currentInventoryFilter = filter;
+            document.querySelectorAll('.inv-filter-btn').forEach(btn => {
+                btn.className = 'inv-filter-btn px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-100 text-slate-700 hover:bg-slate-200';
+            });
+            const active = document.getElementById(`inv-filter-${filter}`);
+            if (active) active.className = 'inv-filter-btn px-3 py-1.5 rounded-lg text-xs font-bold bg-forest-700 text-white';
+            renderInventoryTable();
+        }
+
+        function renderInventoryTable() {
+            const tbody = document.getElementById('inventoryTableBody');
+            const isManager = activeStaff.role === 'MANAGER';
+
+            const filtered = flowers.filter(f => {
+                const fresh = isFlowerFresh(f);
+                if (currentInventoryFilter === 'FRESH') return fresh;
+                if (currentInventoryFilter === 'EXPIRED') return !fresh;
+                if (currentInventoryFilter === 'LOW') return f.stockQty <= 20;
+                return true;
+            });
+
+            tbody.innerHTML = filtered.map(f => {
+                const fresh = isFlowerFresh(f);
+                const effPrice = getCalculatedPrice(f);
+                const daysElapsed = getDaysPassed(f.harvestedDate);
+
+                return `
+                <tr class="hover:bg-slate-50/80 transition">
+                    <td class="py-3 px-3 font-mono font-bold text-xs text-slate-700">${f.id}</td>
+                    <td class="py-3 px-3 font-bold text-slate-800">${f.name}</td>
+                    <td class="py-3 px-3 text-xs text-slate-600">${f.color} <span class="text-slate-400">(${f.origin})</span></td>
+                    <td class="py-3 px-3 text-xs font-mono text-slate-600">${f.harvestedDate} <span class="text-[11px] text-slate-400">(${daysElapsed}d ago)</span></td>
+                    <td class="py-3 px-3 text-xs">${f.vaseLifeDays} days</td>
+                    <td class="py-3 px-3 font-medium">$${f.basePrice.toFixed(2)}</td>
+                    <td class="py-3 px-3 font-bold ${fresh ? 'text-forest-700' : 'text-rose-600'}">$${effPrice.toFixed(2)}</td>
+                    <td class="py-3 px-3">
+                        <span class="font-bold ${f.stockQty <= 20 ? 'text-amber-700' : 'text-slate-800'}">${f.stockQty}</span>
+                        ${f.stockQty <= 20 ? `<span class="ml-1 text-[10px] px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 font-bold">LOW</span>` : ''}
+                    </td>
+                    <td class="py-3 px-3">
+                        ${fresh
+                            ? `<span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800">Fresh</span>`
+                            : `<span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-rose-100 text-rose-700">Clearance (-40%)</span>`
+                        }
+                    </td>
+                    <td class="py-3 px-3 text-right space-x-1 whitespace-nowrap">
+                        <button onclick="restockFlower('${f.id}', 25)" class="px-2.5 py-1 rounded-lg bg-forest-50 hover:bg-forest-100 text-forest-700 text-xs font-bold border border-forest-200">+25 Stock</button>
+                        <button onclick="adjustFlowerPrice('${f.id}')" class="px-2.5 py-1 rounded-lg ${isManager ? 'bg-amber-50 hover:bg-amber-100 text-amber-800 border-amber-200' : 'bg-slate-100 text-slate-400 border-slate-200'} text-xs font-bold border">
+                            ${isManager ? 'Edit Price' : '🔒 Price'}
+                        </button>
+                    </td>
+                </tr>`;
+            }).join('');
+        }
+
+        function restockFlower(flowerId, addQty) {
+            const flw = flowers.find(f => f.id === flowerId);
+            if (!flw) return;
+            flw.stockQty += addQty;
+            flw.harvestedDate = todayStr; // Fresh batch
+            sqlLogs.unshift(`UPDATE FLOWER SET stock_qty = stock_qty + ${addQty}, harvested_date = CURRENT_DATE WHERE flower_id = '${flowerId}';`);
+            refreshAllViews();
+            showToast(`Restocked +${addQty} stems of ${flw.name} with today's harvest date.`, 'success');
+        }
+
+        function adjustFlowerPrice(flowerId) {
+            if (activeStaff.role !== 'MANAGER') {
+                showToast(`Access Denied (Part VII Access Control): ${activeStaff.fullName} (FLORIST) cannot modify base prices. Switch to Alice Admin (MANAGER) in the top bar.`, 'error');
+                return;
+            }
+            const flw = flowers.find(f => f.id === flowerId);
+            if (!flw) return;
+            flw.basePrice = +(flw.basePrice + 0.50).toFixed(2);
+            sqlLogs.unshift(`UPDATE ITEM SET base_price = ${flw.basePrice} WHERE item_id = '${flowerId}'; -- Authorized by MANAGER`);
+            refreshAllViews();
+            showToast(`Updated ${flw.name} base price to $${flw.basePrice.toFixed(2)} (Authorized by Store Manager).`, 'success');
+        }
+
+        function handleAddNewFlower(e) {
+            e.preventDefault();
+            const id = document.getElementById('newFlwId').value.trim().toUpperCase();
+            const name = document.getElementById('newFlwName').value.trim();
+            const colorOrigin = document.getElementById('newFlwColor').value.trim();
+            const price = parseFloat(document.getElementById('newFlwPrice').value);
+            const vase = parseInt(document.getElementById('newFlwVase').value, 10);
+            const stock = parseInt(document.getElementById('newFlwStock').value, 10);
+
+            if (flowers.some(f => f.id === id)) {
+                showToast(`Flower ID ${id} already exists in ITEM table.`, 'error');
+                return;
+            }
+
+            const parts = colorOrigin.split('/');
+            flowers.push({
+                id,
+                name,
+                type: 'FLOWER',
+                basePrice: price,
+                color: (parts[0] || 'Mixed').trim(),
+                origin: (parts[1] || 'Local').trim(),
+                vaseLifeDays: vase,
+                harvestedDate: todayStr,
+                stockQty: stock
+            });
+
+            sqlLogs.unshift(`INSERT INTO ITEM VALUES ('${id}', '${name}', 'FLOWER', ${price});`);
+            sqlLogs.unshift(`INSERT INTO FLOWER VALUES ('${id}', '${parts[0].trim()}', ${vase}, CURRENT_DATE, ${stock}, '${(parts[1] || 'Local').trim()}');`);
+
+            e.target.reset();
+            refreshAllViews();
+            showToast(`Added new flower variety ${name} (${id}) to inventory.`, 'success');
+        }
+
+        // --- TAB 4: CUSTOMER CRM ---
+        function renderCustomersTable() {
+            const tbody = document.getElementById('customerTableBody');
+            tbody.innerHTML = customers.map(c => {
+                const rate = Math.round(getDiscountRate(c.membershipTier) * 100);
+                const badgeColor = c.membershipTier === 'GOLD'
+                    ? 'bg-amber-100 text-amber-800 border-amber-300'
+                    : (c.membershipTier === 'SILVER' ? 'bg-slate-200 text-slate-800 border-slate-300' : 'bg-slate-100 text-slate-600 border-slate-200');
+
+                return `
+                <tr class="hover:bg-slate-50 transition">
+                    <td class="py-3 px-3 font-mono font-bold text-xs text-slate-700">${c.id}</td>
+                    <td class="py-3 px-3 font-bold text-slate-800">${c.fullName}</td>
+                    <td class="py-3 px-3 text-xs font-mono text-slate-600">${c.phone}</td>
+                    <td class="py-3 px-3"><span class="px-2.5 py-0.5 rounded-full text-xs font-bold border ${badgeColor}">${c.membershipTier}</span></td>
+                    <td class="py-3 px-3 font-semibold text-emerald-700">${rate}% OFF</td>
+                    <td class="py-3 px-3 font-bold text-slate-800">$${c.totalSpent.toFixed(2)}</td>
+                    <td class="py-3 px-3 text-right">
+                        <button onclick="selectCustomerForPos('${c.id}')" class="px-3 py-1 rounded-lg bg-forest-50 hover:bg-forest-100 text-forest-700 text-xs font-bold border border-forest-200">
+                            Select in POS
+                        </button>
+                    </td>
+                </tr>`;
+            }).join('');
+        }
+
+        function selectCustomerForPos(custId) {
+            document.getElementById('posCustomerSelect').value = custId;
+            updateCartTotals();
+            switchTab('pos');
+            showToast(`Selected customer ${custId} for active POS checkout.`, 'info');
+        }
+
+        function handleRegisterCustomer(e) {
+            e.preventDefault();
+            const id = document.getElementById('regCustId').value.trim().toUpperCase();
+            const fullName = document.getElementById('regCustName').value.trim();
+            const phone = document.getElementById('regCustPhone').value.trim();
+            const tier = document.getElementById('regCustTier').value;
+
+            if (customers.some(c => c.id === id || c.phone === phone)) {
+                showToast('Customer ID or Phone Number already exists.', 'error');
+                return;
+            }
+
+            customers.push({ id, fullName, phone, membershipTier: tier, totalSpent: 0.0 });
+            sqlLogs.unshift(`INSERT INTO CUSTOMER (customer_id, full_name, phone, membership_tier, total_spent) VALUES ('${id}', '${fullName}', '${phone}', '${tier}', 0.00);`);
+            e.target.reset();
+            refreshAllViews();
+            showToast(`Registered customer ${fullName} (${tier} Tier).`, 'success');
+        }
+
+        // --- TAB 5: DATABASE ORDERS & SQL LOG ---
+        function renderDatabaseTab() {
+            const ordersContainer = document.getElementById('ordersHistoryContainer');
+            ordersContainer.innerHTML = ordersHistory.map(o => `
+                <div class="p-3.5 rounded-xl border border-slate-200 bg-slate-50/60 space-y-2">
+                    <div class="flex items-center justify-between border-b border-slate-200 pb-2">
+                        <div>
+                            <span class="font-mono font-bold text-xs text-forest-700">${o.orderId}</span>
+                            <span class="text-xs text-slate-500 ml-2">${o.timestamp}</span>
+                        </div>
+                        <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800">${o.status} • $${o.total.toFixed(2)}</span>
+                    </div>
+                    <div class="text-xs text-slate-600 flex justify-between">
+                        <span>Customer: <strong>${o.customerName}</strong></span>
+                        <span>Staff: <strong>${o.staffName}</strong></span>
+                    </div>
+                    <div class="text-xs text-slate-500 space-y-0.5 pt-1">
+                        ${o.lines.map(l => `<div>• ${l.name} × ${l.qty} ($${l.subtotal.toFixed(2)})</div>`).join('')}
+                    </div>
+                </div>
+            `).join('');
+
+            const sqlConsole = document.getElementById('sqlLogConsole');
+            sqlConsole.innerHTML = sqlLogs.map(stmt => `
+                <div class="p-2 rounded bg-slate-800/90 border-l-2 border-emerald-400 text-slate-200 break-all">
+                    ${stmt}
+                </div>
+            `).join('');
+        }
+
+        // --- KPI BAR & GLOBAL REFRESH ---
+        function updateKpiStrip() {
+            const totalRev = ordersHistory.reduce((sum, o) => sum + o.total, 0);
+            const totalStems = flowers.reduce((sum, f) => sum + f.stockQty, 0);
+            const clearanceCount = flowers.filter(f => !isFlowerFresh(f)).length;
+
+            document.getElementById('kpiRevenue').textContent = `$${totalRev.toFixed(2)}`;
+            document.getElementById('kpiStems').textContent = totalStems;
+            document.getElementById('kpiClearance').textContent = clearanceCount;
+            document.getElementById('kpiCustomers').textContent = customers.length;
+        }
+
+        function showToast(message, type = 'success') {
+            const banner = document.getElementById('toastBanner');
+            const text = document.getElementById('toastText');
+            const icon = document.getElementById('toastIcon');
+
+            banner.classList.remove('hidden', 'bg-emerald-50', 'border-emerald-300', 'text-emerald-800', 'bg-rose-50', 'border-rose-300', 'text-rose-800', 'bg-sky-50', 'border-sky-300', 'text-sky-800');
+
+            if (type === 'error') {
+                banner.classList.add('bg-rose-50', 'border-rose-300', 'text-rose-800');
+                icon.textContent = '!';
+            } else if (type === 'info') {
+                banner.classList.add('bg-sky-50', 'border-sky-300', 'text-sky-800');
+                icon.textContent = 'i';
+            } else {
+                banner.classList.add('bg-emerald-50', 'border-emerald-300', 'text-emerald-800');
+                icon.textContent = '✓';
+            }
+
+            text.textContent = message;
+        }
+
+        function hideToast() {
+            document.getElementById('toastBanner').classList.add('hidden');
+        }
+
+        function openSpringModal() {
+            const m = document.getElementById('springModal');
+            m.classList.remove('hidden');
+            m.classList.add('flex');
+        }
+
+        function closeSpringModal() {
+            const m = document.getElementById('springModal');
+            m.classList.add('hidden');
+            m.classList.remove('flex');
+        }
+
+        function refreshAllViews() {
+            renderPosCatalog();
+            renderCustomerDropdown();
+            renderCart();
+            renderBouquetBuilderSelectors();
+            renderInventoryTable();
+            renderCustomersTable();
+            renderDatabaseTab();
+            updateKpiStrip();
+        }
+
+        window.onload = function () {
+            refreshAllViews();
+        };
+    </script>
+</body>
+</html>
